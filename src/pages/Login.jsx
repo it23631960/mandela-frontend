@@ -1,33 +1,37 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const role = new URLSearchParams(location.search).get('role');
+  const role = new URLSearchParams(location.search).get("role");
   const [employeeEmails, setEmployeeEmails] = useState([]);
 
-  const [email, setEmail] = useState('');
-  const [nic, setNic] = useState('');
+  const [email, setEmail] = useState("");
+  const [nic, setNic] = useState("");
 
   useEffect(() => {
     if (!role) {
-      navigate('/auth');
+      navigate("/auth");
     }
-     const fetchEmails = async () => {
-    try {
-      const response = await axios.get('${import.meta.env.VITE_API_BASE_URL}/api/employees');
-      const filtered = response.data.filter(emp => emp.role.toLowerCase() === role.toLowerCase());
-      setEmployeeEmails(filtered.map(emp => emp.email));
-    } catch (err) {
-      console.error("Error fetching employees:", err);
-    }
-  };
+    const fetchEmails = async () => {
+      try {
+        const response = await axios.get(
+          import.meta.env.VITE_API_BASE_URL + "/api/employees"
+        );
+        const filtered = response.data.filter(
+          (emp) => emp.role.toLowerCase() === role.toLowerCase()
+        );
+        setEmployeeEmails(filtered.map((emp) => emp.email));
+      } catch (err) {
+        console.error("Error fetching employees:", err);
+      }
+    };
 
-  fetchEmails();
+    fetchEmails();
   }, [role, navigate]);
 
   if (!role) return null;
@@ -41,11 +45,14 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("${import.meta.env.VITE_API_BASE_URL}/api/employees/login", {
-        email,
-        nic,
-        role,
-      });
+      const response = await axios.post(
+        import.meta.env.VITE_API_BASE_URL + "/api/employees/login",
+        {
+          email,
+          nic,
+          role,
+        }
+      );
 
       login({
         email,
@@ -53,7 +60,7 @@ const Login = () => {
         role,
       }); // Use the login function from context instead of localStorage
 
-      localStorage.setItem('employeeData', JSON.stringify(response.data));
+      localStorage.setItem("employeeData", JSON.stringify(response.data));
 
       alert("Login successful");
 
@@ -70,7 +77,9 @@ const Login = () => {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-4">Login as {role === 'admin' ? 'Admin' : 'Employee'}</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          Login as {role === "admin" ? "Admin" : "Employee"}
+        </h2>
         <form onSubmit={handleLogin}>
           <div className="space-y-4">
             <select
@@ -80,10 +89,12 @@ const Login = () => {
             >
               <option value="">Select Email</option>
               {employeeEmails.map((email, index) => (
-                <option key={index} value={email}>{email}</option>
+                <option key={index} value={email}>
+                  {email}
+                </option>
               ))}
-          </select>
-          
+            </select>
+
             <input
               type="text"
               value={nic}

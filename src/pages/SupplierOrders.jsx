@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const SupplierOrders = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState('');
-  const [items, setItems] = useState([{ itemName: '', quantity: '', price: '' }]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [items, setItems] = useState([
+    { itemName: "", quantity: "", price: "" },
+  ]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [viewOrder, setViewOrder] = useState(null);
 
   useEffect(() => {
@@ -17,52 +19,58 @@ const SupplierOrders = () => {
 
   const fetchSuppliersAndOrders = async () => {
     try {
-      const supplierRes = await axios.get('${import.meta.env.VITE_API_BASE_URL}/suppliers');
-      const supplierList = supplierRes.data.map(s => ({
+      const supplierRes = await axios.get(
+        import.meta.env.VITE_API_BASE_URL + "/suppliers"
+      );
+      const supplierList = supplierRes.data.map((s) => ({
         id: s.id,
         companyName: s.name,
-        companyContactNo: s.phone
+        companyContactNo: s.phone,
       }));
       setSuppliers(supplierList);
 
-      const orderRes = await axios.get('${import.meta.env.VITE_API_BASE_URL}/supplier-orders');
-      const ordersWithSupplierInfo = orderRes.data.map(order => {
-        const supplier = supplierList.find(s => s.id === order.supplier.id);
+      const orderRes = await axios.get(
+        import.meta.env.VITE_API_BASE_URL + "/supplier-orders"
+      );
+      const ordersWithSupplierInfo = orderRes.data.map((order) => {
+        const supplier = supplierList.find((s) => s.id === order.supplier.id);
         return {
           ...order,
-          supplierName: supplier?.companyName || 'Unknown Supplier',
-          supplierPhone: supplier?.companyContactNo || 'N/A'
+          supplierName: supplier?.companyName || "Unknown Supplier",
+          supplierPhone: supplier?.companyContactNo || "N/A",
         };
       });
 
       setOrders(ordersWithSupplierInfo);
-
     } catch (error) {
-      console.error('Failed to fetch data', error);
+      console.error("Failed to fetch data", error);
       setSuppliers([]);
       setOrders([]);
     }
   };
 
   const handleAddItem = () => {
-    setItems([...items, { itemName: '', quantity: '', price: '' }]);
+    setItems([...items, { itemName: "", quantity: "", price: "" }]);
   };
 
   const handleItemChange = (index, field, value) => {
-  const updated = [...items];
-  updated[index][field] = (field === 'quantity' || field === 'price') 
-    ? (value === '' ? '' : Number(value)) 
-    : value;
-  setItems(updated);
-};
+    const updated = [...items];
+    updated[index][field] =
+      field === "quantity" || field === "price"
+        ? value === ""
+          ? ""
+          : Number(value)
+        : value;
+    setItems(updated);
+  };
 
   const calculateTotal = () =>
     items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2);
 
   const handleSaveOrder = async () => {
-    const supplier = suppliers.find(s => s.id === parseInt(selectedSupplier));
+    const supplier = suppliers.find((s) => s.id === parseInt(selectedSupplier));
     if (!supplier || items.length === 0 || !items[0].itemName) {
-      alert('Please fill all fields.');
+      alert("Please fill all fields.");
       return;
     }
 
@@ -70,19 +78,21 @@ const SupplierOrders = () => {
       const newOrder = {
         supplier: { id: supplier.id },
         items: JSON.stringify(items),
-        total: calculateTotal()
+        total: calculateTotal(),
       };
 
-      await axios.post('${import.meta.env.VITE_API_BASE_URL}/supplier-orders', newOrder);
+      await axios.post(
+        import.meta.env.VITE_API_BASE_URL + "/supplier-orders",
+        newOrder
+      );
       await fetchSuppliersAndOrders();
 
       setShowCreateModal(false);
-      setSelectedSupplier('');
-      setItems([{ itemName: '', quantity: 1, price: 0 }]);
-
+      setSelectedSupplier("");
+      setItems([{ itemName: "", quantity: 1, price: 0 }]);
     } catch (error) {
-      console.error('Failed to save order:', error);
-      alert('Failed to save order. Please try again.');
+      console.error("Failed to save order:", error);
+      alert("Failed to save order. Please try again.");
     }
   };
 
@@ -92,32 +102,38 @@ const SupplierOrders = () => {
   };
 
   const handleDelete = async (orderId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this order?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this order?"
+    );
     if (confirmDelete) {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/supplier-orders/${orderId}`);
+        await axios.delete(
+          `${import.meta.env.VITE_API_BASE_URL}/supplier-orders/${orderId}`
+        );
         await fetchSuppliersAndOrders();
       } catch (error) {
-        console.error('Failed to delete order:', error);
-        alert('Failed to delete order. Please try again.');
+        console.error("Failed to delete order:", error);
+        alert("Failed to delete order. Please try again.");
       }
     }
   };
 
   const filteredOrders = orders.filter(
-    o =>
+    (o) =>
       o.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.supplierPhone?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log('Suppliers in dropdown:', suppliers);
+  console.log("Suppliers in dropdown:", suppliers);
 
   return (
     <div className="p-8 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Supplier Orders</h1>
-          <p className="text-sm text-gray-500">Track and manage orders efficiently.</p>
+          <p className="text-sm text-gray-500">
+            Track and manage orders efficiently.
+          </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -159,7 +175,9 @@ const SupplierOrders = () => {
                       </div>
                     ))}
                   </td>
-                  <td className="p-4 text-right font-semibold">{order.total}</td>
+                  <td className="p-4 text-right font-semibold">
+                    {order.total}
+                  </td>
                   <td className="p-4 text-center space-x-4">
                     <button
                       onClick={() => handleView(order)}
@@ -193,7 +211,7 @@ const SupplierOrders = () => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
             <h2 className="text-xl font-semibold mb-4">Create New Order</h2>
-          
+
             <label className="block mb-2 text-sm font-medium">Supplier</label>
             <select
               value={selectedSupplier}
@@ -215,21 +233,25 @@ const SupplierOrders = () => {
                   type="text"
                   placeholder="Item name"
                   value={item.itemName}
-                  onChange={(e) => handleItemChange(i, 'itemName', e.target.value)}
+                  onChange={(e) =>
+                    handleItemChange(i, "itemName", e.target.value)
+                  }
                   className="w-full border p-2 rounded"
                 />
                 <input
                   type="number"
                   placeholder="Qty"
                   value={item.quantity}
-                  onChange={(e) => handleItemChange(i, 'quantity', e.target.value)}
+                  onChange={(e) =>
+                    handleItemChange(i, "quantity", e.target.value)
+                  }
                   className="w-24 border p-2 rounded"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={item.price}
-                  onChange={(e) => handleItemChange(i, 'price', e.target.value)}
+                  onChange={(e) => handleItemChange(i, "price", e.target.value)}
                   className="w-28 border p-2 rounded"
                 />
               </div>
@@ -267,8 +289,12 @@ const SupplierOrders = () => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative">
             <h2 className="text-xl font-bold mb-4">Order Details</h2>
-            <p className="mb-2"><strong>Supplier:</strong> {viewOrder.supplierName}</p>
-            <p className="mb-4"><strong>Phone:</strong> {viewOrder.supplierPhone}</p>
+            <p className="mb-2">
+              <strong>Supplier:</strong> {viewOrder.supplierName}
+            </p>
+            <p className="mb-4">
+              <strong>Phone:</strong> {viewOrder.supplierPhone}
+            </p>
             <h3 className="font-semibold mb-2">Items:</h3>
             <ul className="list-disc list-inside mb-4">
               {JSON.parse(viewOrder.items).map((item, i) => (
@@ -289,7 +315,6 @@ const SupplierOrders = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

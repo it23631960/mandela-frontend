@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaEdit, FaTrash, FaEye, FaPlus, FaSearch } from 'react-icons/fa';
 
-const API_URL = '${import.meta.env.VITE_API_BASE_URL}/api/employees';
+const API_URL = import.meta.env.VITE_API_BASE_URL + '/api/employees';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);

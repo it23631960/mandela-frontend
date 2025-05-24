@@ -9,20 +9,22 @@ const Orders = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("${import.meta.env.VITE_API_BASE_URL}/orders")
-      .then(response => {
+    axios
+      .get(import.meta.env.VITE_API_BASE_URL + "/orders")
+      .then((response) => {
         setOrders(response.data);
         setFilteredOrders(response.data);
       })
-      .catch(error => console.error("Error fetching orders:", error));
+      .catch((error) => console.error("Error fetching orders:", error));
   }, []);
 
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
-    const filtered = orders.filter(order =>
-      order.transactionId.toLowerCase().includes(term) ||
-      order.customerPhone.toLowerCase().includes(term)
+    const filtered = orders.filter(
+      (order) =>
+        order.transactionId.toLowerCase().includes(term) ||
+        order.customerPhone.toLowerCase().includes(term)
     );
     setFilteredOrders(filtered);
   };
@@ -32,7 +34,9 @@ const Orders = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-1">Order History</h1>
-        <p className="text-sm text-gray-500">Manage and monitor your customer orders</p>
+        <p className="text-sm text-gray-500">
+          Manage and monitor your customer orders
+        </p>
       </div>
 
       {/* Search + Stats */}
@@ -46,7 +50,9 @@ const Orders = () => {
         />
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <p className="text-gray-700 text-sm">Total Orders</p>
-          <p className="text-2xl font-bold text-black">{filteredOrders.length}</p>
+          <p className="text-2xl font-bold text-black">
+            {filteredOrders.length}
+          </p>
           <p className="text-green-600 text-xs mt-1">↑ Active this month</p>
         </div>
       </div>
@@ -72,14 +78,18 @@ const Orders = () => {
                 </td>
               </tr>
             ) : (
-              filteredOrders.map(order => (
+              filteredOrders.map((order) => (
                 <tr key={order.id} className="text-center hover:bg-gray-50">
                   <td className="px-6 py-4 border">{order.id}</td>
                   <td className="px-6 py-4 border">{order.transactionId}</td>
                   <td className="px-6 py-4 border">{order.customerPhone}</td>
-                  <td className="px-6 py-4 border">Rs. {order.total.toFixed(2)}</td>
                   <td className="px-6 py-4 border">
-                    {order.discountPercent > 0 ? `${order.discountPercent}%` : "No"}
+                    Rs. {order.total.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 border">
+                    {order.discountPercent > 0
+                      ? `${order.discountPercent}%`
+                      : "No"}
                   </td>
                   <td className="px-6 py-4 border">
                     <button
