@@ -29,6 +29,10 @@ const Orders = () => {
     setFilteredOrders(filtered);
   };
 
+  const handleDownloadInvoice = (orderId) => {
+    navigate(`/admin/invoice/${orderId}?download=true`);
+  };
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -91,7 +95,7 @@ const Orders = () => {
                       ? `${order.discountPercent}%`
                       : "No"}
                   </td>
-                  <td className="px-6 py-4 border">
+                  <td className="px-6 py-4 border flex justify-center space-x-2">
                     <button
                       onClick={() => navigate(`/admin/invoice/${order.id}`)}
                       className="bg-black text-white px-4 py-1 rounded-md hover:bg-gray-800"

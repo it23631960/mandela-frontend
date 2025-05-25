@@ -120,13 +120,13 @@ const Customer = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-3xl font-bold">Regular Customer List</h2>
-        <div className="relative ">
+        <div className="relative">
           <input
             type="text"
             placeholder="Search by Customer Name"
             value={searchQuery}
             onChange={handleSearchChange}
-            className="px-4 py-2 pr-10 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-64 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-500"
           />
           <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
         </div>

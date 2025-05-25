@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const SupplierOrders = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -12,6 +14,7 @@ const SupplierOrders = () => {
   ]);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewOrder, setViewOrder] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     fetchSuppliersAndOrders();
@@ -117,6 +120,225 @@ const SupplierOrders = () => {
       }
     }
   };
+  const handleDownloadInvoice = async (order) => {
+    setViewOrder(order);
+    setIsDownloading(true);
+    setShowViewModal(true);
+
+    // Allow time for the modal to render
+    setTimeout(async () => {
+      try {
+        const invoiceElement = document.getElementById("supplier-invoice");
+        if (!invoiceElement) {
+          alert("Invoice element not found");
+          setIsDownloading(false);
+          return;
+        }
+
+        // Create a completely new container for the PDF content
+        const container = document.createElement("div");
+        container.style.backgroundColor = "#ffffff";
+        container.style.padding = "20px";
+        container.style.width = "800px";
+        container.style.fontFamily = "Arial, sans-serif";
+        container.style.position = "absolute";
+        container.style.left = "-9999px";
+        document.body.appendChild(container);
+
+        // Create a clean version with basic HTML and inline styles
+        const invoiceHeader = document.createElement("div");
+        invoiceHeader.style.textAlign = "center";
+        invoiceHeader.style.marginBottom = "20px";
+
+        const title = document.createElement("h2");
+        title.textContent = "Supplier Order Invoice";
+        title.style.fontSize = "24px";
+        title.style.fontWeight = "bold";
+        title.style.color = "#000000";
+        title.style.marginBottom = "5px";
+        invoiceHeader.appendChild(title);
+
+        container.appendChild(invoiceHeader);
+
+        // Order Info
+        const infoSection = document.createElement("div");
+        infoSection.style.marginBottom = "20px";
+        infoSection.style.padding = "10px 0";
+        infoSection.style.borderBottom = "1px solid #eee";
+
+        const orderId = document.createElement("p");
+        orderId.innerHTML = `<strong>Order ID:</strong> ${order.id}`;
+        orderId.style.margin = "5px 0";
+        infoSection.appendChild(orderId);
+
+        const orderDate = document.createElement("p");
+        orderDate.innerHTML = `<strong>Date:</strong> ${new Date().toLocaleDateString()}`;
+        orderDate.style.margin = "5px 0";
+        infoSection.appendChild(orderDate);
+
+        container.appendChild(infoSection);
+
+        // Supplier Info
+        const supplierSection = document.createElement("div");
+        supplierSection.style.marginBottom = "20px";
+
+        const supplierName = document.createElement("p");
+        supplierName.innerHTML = `<strong>Supplier:</strong> ${order.supplierName}`;
+        supplierName.style.margin = "5px 0";
+        supplierSection.appendChild(supplierName);
+
+        const supplierPhone = document.createElement("p");
+        supplierPhone.innerHTML = `<strong>Phone:</strong> ${order.supplierPhone}`;
+        supplierPhone.style.margin = "5px 0";
+        supplierSection.appendChild(supplierPhone);
+
+        container.appendChild(supplierSection);
+
+        // Items Section
+        const itemsSection = document.createElement("div");
+        itemsSection.style.marginBottom = "20px";
+
+        const itemsTitle = document.createElement("h3");
+        itemsTitle.textContent = "Items:";
+        itemsTitle.style.fontSize = "16px";
+        itemsTitle.style.fontWeight = "bold";
+        itemsTitle.style.margin = "10px 0";
+        itemsSection.appendChild(itemsTitle);
+
+        // Create table
+        const table = document.createElement("table");
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+        table.style.border = "1px solid #ddd";
+
+        // Table header
+        const thead = document.createElement("thead");
+        thead.style.backgroundColor = "#f0f0f0";
+
+        const headerRow = document.createElement("tr");
+        ["Item", "Qty", "Price (Rs.)", "Total (Rs.)"].forEach((text) => {
+          const th = document.createElement("th");
+          th.textContent = text;
+          th.style.padding = "8px";
+          th.style.border = "1px solid #ddd";
+          th.style.textAlign = text === "Item" ? "left" : "center";
+          headerRow.appendChild(th);
+        });
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Table body
+        const tbody = document.createElement("tbody");
+
+        // Parse items and create rows
+        const items = JSON.parse(order.items);
+        items.forEach((item) => {
+          const tr = document.createElement("tr");
+
+          // Item name
+          const tdName = document.createElement("td");
+          tdName.textContent = item.itemName;
+          tdName.style.padding = "8px";
+          tdName.style.border = "1px solid #ddd";
+          tr.appendChild(tdName);
+
+          // Quantity
+          const tdQty = document.createElement("td");
+          tdQty.textContent = item.quantity;
+          tdQty.style.padding = "8px";
+          tdQty.style.border = "1px solid #ddd";
+          tdQty.style.textAlign = "center";
+          tr.appendChild(tdQty);
+
+          // Price
+          const tdPrice = document.createElement("td");
+          tdPrice.textContent = item.price;
+          tdPrice.style.padding = "8px";
+          tdPrice.style.border = "1px solid #ddd";
+          tdPrice.style.textAlign = "right";
+          tr.appendChild(tdPrice);
+
+          // Total
+          const tdTotal = document.createElement("td");
+          tdTotal.textContent = (item.quantity * item.price).toFixed(2);
+          tdTotal.style.padding = "8px";
+          tdTotal.style.border = "1px solid #ddd";
+          tdTotal.style.textAlign = "right";
+          tr.appendChild(tdTotal);
+
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        itemsSection.appendChild(table);
+
+        container.appendChild(itemsSection);
+
+        // Total
+        const totalSection = document.createElement("div");
+        totalSection.style.textAlign = "right";
+        totalSection.style.marginBottom = "20px";
+
+        const total = document.createElement("p");
+        total.innerHTML = `<strong style="font-size:16px;">Total: Rs. ${order.total}</strong>`;
+        totalSection.appendChild(total);
+
+        container.appendChild(totalSection);
+
+        // Footer
+        const footer = document.createElement("div");
+        footer.style.textAlign = "center";
+        footer.style.marginTop = "30px";
+        footer.style.borderTop = "1px solid #eee";
+        footer.style.paddingTop = "10px";
+
+        const footerText1 = document.createElement("p");
+        footerText1.textContent = "Mandela Factory Outlet";
+        footerText1.style.margin = "5px 0";
+        footerText1.style.color = "#666";
+        footer.appendChild(footerText1);
+
+        const footerText2 = document.createElement("p");
+        footerText2.textContent = "Official Supplier Order Invoice";
+        footerText2.style.margin = "5px 0";
+        footerText2.style.color = "#666";
+        footer.appendChild(footerText2);
+
+        container.appendChild(footer);
+
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+
+        // Clean up the temporary elements
+        document.body.removeChild(container);
+
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        pdf.save(`supplier_order_${order.id}.pdf`);
+
+        setIsDownloading(false);
+        setShowViewModal(false);
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+        alert("Failed to generate PDF. Please try again.");
+        setIsDownloading(false);
+      }
+    }, 500);
+  };
 
   const filteredOrders = orders.filter(
     (o) =>
@@ -178,13 +400,20 @@ const SupplierOrders = () => {
                   <td className="p-4 text-right font-semibold">
                     {order.total}
                   </td>
-                  <td className="p-4 text-center space-x-4">
+                  <td className="p-4 text-center space-x-2">
                     <button
                       onClick={() => handleView(order)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 mr-2"
                       title="View"
                     >
                       👁
+                    </button>
+                    <button
+                      onClick={() => handleDownloadInvoice(order)}
+                      className="text-green-600 hover:text-green-800 mr-2"
+                      title="Download Invoice"
+                    >
+                      📥
                     </button>
                     <button
                       onClick={() => handleDelete(order.id)}
@@ -288,29 +517,73 @@ const SupplierOrders = () => {
       {showViewModal && viewOrder && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative">
-            <h2 className="text-xl font-bold mb-4">Order Details</h2>
-            <p className="mb-2">
-              <strong>Supplier:</strong> {viewOrder.supplierName}
-            </p>
-            <p className="mb-4">
-              <strong>Phone:</strong> {viewOrder.supplierPhone}
-            </p>
-            <h3 className="font-semibold mb-2">Items:</h3>
-            <ul className="list-disc list-inside mb-4">
-              {JSON.parse(viewOrder.items).map((item, i) => (
-                <li key={i}>
-                  {item.itemName} - {item.quantity} × Rs.{item.price}
-                </li>
-              ))}
-            </ul>
-            <p className="text-right font-bold">Total: Rs. {viewOrder.total}</p>
+            <div id="supplier-invoice">
+              <h2 className="text-xl font-bold mb-4">Supplier Order Invoice</h2>
+              <div className="border-b pb-2 mb-4">
+                <p className="text-gray-800 mb-1">
+                  <strong>Order ID:</strong> {viewOrder.id}
+                </p>
+                <p className="text-gray-800 mb-1">
+                  <strong>Date:</strong> {new Date().toLocaleDateString()}
+                </p>
+              </div>
+              <p className="mb-2">
+                <strong>Supplier:</strong> {viewOrder.supplierName}
+              </p>
+              <p className="mb-4">
+                <strong>Phone:</strong> {viewOrder.supplierPhone}
+              </p>
+              <h3 className="font-semibold mb-2">Items:</h3>
+              <table className="w-full mb-4 border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border p-2 text-left">Item</th>
+                    <th className="border p-2 text-center">Qty</th>
+                    <th className="border p-2 text-right">Price (Rs.)</th>
+                    <th className="border p-2 text-right">Total (Rs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {JSON.parse(viewOrder.items).map((item, i) => (
+                    <tr key={i}>
+                      <td className="border p-2">{item.itemName}</td>
+                      <td className="border p-2 text-center">
+                        {item.quantity}
+                      </td>
+                      <td className="border p-2 text-right">{item.price}</td>
+                      <td className="border p-2 text-right">
+                        {(item.quantity * item.price).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="text-right mb-4">
+                <p className="font-bold text-lg">
+                  Total: Rs. {viewOrder.total}
+                </p>
+              </div>
+              <div className="mt-6 text-center text-gray-500 text-sm">
+                <p>Mandela Factory Outlet</p>
+                <p>Official Supplier Order Invoice</p>
+              </div>
+            </div>
             <div className="flex justify-end mt-6">
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Close
-              </button>
+              {isDownloading ? (
+                <button
+                  disabled
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Downloading...
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>
